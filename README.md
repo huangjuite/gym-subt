@@ -34,3 +34,8 @@ test DQN
 ```
 $ cd dqn && python run_subt_dqn.py
 ```
+
+rviz
+```
+$ rviz -d gym-subt-v0.rviz
+```
