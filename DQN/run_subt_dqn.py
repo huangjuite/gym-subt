@@ -16,13 +16,13 @@ env = env.unwrapped
 RL = DeepQNetwork(n_actions=len(env.actions),
                   n_features=env.laser_len,
                   learning_rate=0.01, e_greedy=0.9,
-                  replace_target_iter=200, memory_size=4000,
+                  replace_target_iter=500, memory_size=4000,
                   e_greedy_increment=0.001,)
 
 total_steps = 0
 
 
-for i_episode in range(2000):
+for i_episode in range(5000):
 
     observation = env.reset()
     ep_r = 0
