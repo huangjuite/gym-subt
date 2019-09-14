@@ -96,7 +96,7 @@ class SubtEnv(gym.Env):
             elif dis < 0.8:
                 done = True
         if done:
-          self.reward = -100
+          self.reward = -10
         
         # self.pause_physics()
         return np.array(laser), self.reward, done, info
