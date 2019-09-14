@@ -14,6 +14,7 @@ from gazebo_msgs.srv import SetModelState
 
 STEP_TIME = 0.02
 
+
 class SubtEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
@@ -44,7 +45,7 @@ class SubtEnv(gym.Env):
                         [1.5, 0.8],
                         [0.75, 0.8]]
         self.reward = 0
-        self.laser_len = 126
+        self.laser_len = 42
 
         self.reset_world = rospy.ServiceProxy('/gazebo/reset_world', Empty)
         self.reset_model = rospy.ServiceProxy(
@@ -85,16 +86,18 @@ class SubtEnv(gym.Env):
         laser = self.get_observation()
 
         # reward design
-        self.reward += 0.5
+        # self.reward += 0.05
         for i, dis in enumerate(laser):
             dis = 10-dis
             if dis > 1.5 and dis < 2.5:
-                self.reward -= 0.01
+                self.reward += 0.002
             elif dis > 0.8 and dis < 1.5:
-                self.reward -= 0.02
+                self.reward += 0.001
             elif dis < 0.8:
-                self.reward -= 0.05
+                self.reward = 0
                 done = True
+            else:
+                self.reward += 0.003
 
         # self.pause_physics()
         return np.array(laser), self.reward, done, info
