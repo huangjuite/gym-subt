@@ -23,8 +23,8 @@ MAX_EPISODE = 3000
 MAX_EP_STEPS = 10000   # maximum time step in one episode
 
 GAMMA = 0.9     # reward discount in TD error
-LR_A = 0.01    # learning rate for actor
-LR_C = 0.1     # learning rate for critic
+LR_A = 0.001    # learning rate for actor
+LR_C = 0.01     # learning rate for critic
 
 env = gym.make('gym_subt:subt-v0')
 env = env.unwrapped

@@ -32,7 +32,12 @@ launch laser scan in docker
 
 test DQN
 ```
-$ cd dqn && python run_subt_dqn.py
+$ cd DQN && python run_subt_dqn.py
+```
+
+test Actor Critic
+```
+$ cd AC && python run_subt_ac.py
 ```
 
 rviz

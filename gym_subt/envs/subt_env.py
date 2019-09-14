@@ -86,19 +86,18 @@ class SubtEnv(gym.Env):
         laser = self.get_observation()
 
         # reward design
-        # self.reward += 0.05
+        self.reward += 0.05
         for i, dis in enumerate(laser):
             dis = 10-dis
             if dis > 1.5 and dis < 2.5:
-                self.reward += 0.002
+                self.reward -= 0.01
             elif dis > 0.8 and dis < 1.5:
-                self.reward += 0.001
+                self.reward -= 0.03
             elif dis < 0.8:
-                self.reward = 0
                 done = True
-            else:
-                self.reward += 0.003
-
+        if done:
+          self.reward = -100
+        
         # self.pause_physics()
         return np.array(laser), self.reward, done, info
 
