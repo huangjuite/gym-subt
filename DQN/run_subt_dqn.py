@@ -15,9 +15,10 @@ env = env.unwrapped
 
 RL = DeepQNetwork(n_actions=len(env.actions),
                   n_features=env.laser_len,
-                  learning_rate=0.01, e_greedy=0.9,
-                  replace_target_iter=100, memory_size=4000,
-                  e_greedy_increment=0.001,)
+                  learning_rate=0.01, e_greedy=0.95,
+                  replace_target_iter=500, memory_size=4000,
+                  e_greedy_increment=0.001,
+                  save_graph_iter=10000)
 
 total_steps = 0
 
@@ -36,13 +37,13 @@ for i_episode in range(5000):
         RL.store_transition(observation, action, reward, observation_)
 
         ep_r += reward
-        if total_steps > 1000:
+        if total_steps > 500:
             RL.learn()
 
         if done:
             print('episode: ', i_episode,
                   'ep_r: ', round(ep_r, 2),
-                  ' epsilon: ', round(RL.epsilon, 2))
+                  'epsilon: ', round(RL.epsilon, 2))
             break
 
         observation = observation_

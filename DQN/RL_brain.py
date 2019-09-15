@@ -13,9 +13,11 @@ gym: 0.8.0
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-
+import os
 
 # Deep Q Network off-policy
+
+
 class DeepQNetwork:
     def __init__(
             self,
@@ -29,6 +31,7 @@ class DeepQNetwork:
             batch_size=32,
             e_greedy_increment=None,
             output_graph=False,
+            save_graph_iter=10000
     ):
         self.n_actions = n_actions
         self.n_features = n_features
@@ -37,6 +40,7 @@ class DeepQNetwork:
         self.epsilon_max = e_greedy
         self.replace_target_iter = replace_target_iter
         self.memory_size = memory_size
+        self.save_graph_iter = save_graph_iter
         self.batch_size = batch_size
         self.epsilon_increment = e_greedy_increment
         self.epsilon = 0 if e_greedy_increment is not None else self.epsilon_max
@@ -57,6 +61,7 @@ class DeepQNetwork:
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
         self.sess = tf.Session(config=config)
+        self.saver = tf.train.Saver()
 
         if output_graph:
             # $ tensorboard --logdir=logs
@@ -68,18 +73,21 @@ class DeepQNetwork:
 
     def _build_net(self):
         # ------------------ build evaluate_net ------------------
-        self.s = tf.placeholder(
-            tf.float32, [None, self.n_features], name='s')  # input
-        self.q_target = tf.placeholder(
-            tf.float32, [None, self.n_actions], name='Q_target')  # for calculating loss
+
         with tf.variable_scope('eval_net'):
+            with tf.variable_scope('input'):
+                self.s = tf.placeholder(
+                    tf.float32, [None, self.n_features], name='s')  # input
+                self.q_target = tf.placeholder(
+                    tf.float32, [None, self.n_actions], name='Q_target')  # for calculating loss
+
             # c_names(collections_names) are the collections to store variables
             c_names, n_l1, n_l2, w_initializer, b_initializer = \
                 ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES], 20, 20, \
                 tf.random_normal_initializer(
                     0., 0.3), tf.constant_initializer(0.1)  # config of layers
 
-            # first layer. collections is used later when assign to target net
+           # first layer. collections is used later when assign to target net
             with tf.variable_scope('l1'):
                 w1 = tf.get_variable(
                     'w1', [self.n_features, n_l1], initializer=w_initializer, collections=c_names)
@@ -100,7 +108,7 @@ class DeepQNetwork:
                     'w3', [n_l2, self.n_actions], initializer=w_initializer, collections=c_names)
                 b3 = tf.get_variable(
                     'b3', [1, self.n_actions], initializer=b_initializer, collections=c_names)
-                self.q_eval = tf.matmul(l2, w3) + b3
+                self.q_eval = tf.add(tf.matmul(l2, w3), b3, name='output_q')
 
         with tf.variable_scope('loss'):
             self.loss = tf.reduce_mean(
@@ -110,9 +118,12 @@ class DeepQNetwork:
                 self.lr).minimize(self.loss)
 
         # ------------------ build target_net ------------------
-        self.s_ = tf.placeholder(
-            tf.float32, [None, self.n_features], name='s_')    # input
+
         with tf.variable_scope('target_net'):
+            with tf.variable_scope('input'):
+                self.s_ = tf.placeholder(
+                    tf.float32, [None, self.n_features], name='s_')
+
             # c_names(collections_names) are the collections to store variables
             c_names = ['target_net_params', tf.GraphKeys.GLOBAL_VARIABLES]
 
@@ -232,6 +243,15 @@ class DeepQNetwork:
         self.epsilon = self.epsilon + \
             self.epsilon_increment if self.epsilon < self.epsilon_max else self.epsilon_max
         self.learn_step_counter += 1
+
+        if self.learn_step_counter % self.save_graph_iter == 0:
+            try:
+                os.mkdir('./result')
+            except:
+                pass
+            last_ckpt = self.saver.save(
+                self.sess, 'result/dqn/subt_rl.ckpt', global_step=self.learn_step_counter)
+            print('\nmodel %d saved' % self.learn_step_counter)
 
     def plot_cost(self):
         import matplotlib.pyplot as plt
