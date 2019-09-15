@@ -14,6 +14,14 @@ from gazebo_msgs.srv import SetModelState
 
 STEP_TIME = 0.02
 
+# [x,y,z,x,y,z,w]
+INITIAL_STATES = [[14.38, -0.05, -0.74, 0, 0.14, 0, 1],
+                  [89.1, 0, -19.87, 0, 0, 0, -1],
+                  [100, 22.5, -20, 0, 0, -0.7, -0.7],
+                  [100, 63.13, -20, 0, 0, -0.7, -0.7],
+                  [80, 51, -20, 0, 0, -0.74, 0.66],
+                  [159, 0, -20, 0, 0, 0, -1]]
+
 
 class SubtEnv(gym.Env):
     metadata = {'render.modes': ['human']}
@@ -25,25 +33,14 @@ class SubtEnv(gym.Env):
         self.image = CompressedImage()
         self.cv_bridge = CvBridge()
 
-        # start position
-        self.state_msg = ModelState()
-        self.state_msg.model_name = 'X1'
-        self.state_msg.pose.position.x = 158.66
-        self.state_msg.pose.position.y = 0
-        self.state_msg.pose.position.z = -19.8
-        self.state_msg.pose.orientation.x = 0
-        self.state_msg.pose.orientation.y = 0
-        self.state_msg.pose.orientation.z = 0
-        self.state_msg.pose.orientation.w = -1
-
         # [Twist.linear.x, Twist.angular.z]
-        self.actions = [[0.75, -0.8],
+        self.actions = [[0.5, -0.8],
                         [1.5, -0.8],
                         [1.5, -0.4],
-                        [1.5, 0],
+                        [1.5, 0.0],
                         [1.5, 0.4],
                         [1.5, 0.8],
-                        [0.75, 0.8]]
+                        [0.5, 0.8]]
         self.reward = 0
         self.laser_len = 42
 
@@ -61,6 +58,19 @@ class SubtEnv(gym.Env):
             '/RL/scan/lower', LaserScan, self.cb_laser_lower, queue_size=1)
         # self.sub_image_raw = rospy.Subscriber('X1/rgbd_camera/rgb/image_raw/compressed',CompressedImage,self.cb_image,queue_size=1)
         self.reset()
+
+    def get_initial_state(self, id):
+        # start position
+        state_msg = ModelState()
+        state_msg.model_name = 'X1'
+        state_msg.pose.position.x = INITIAL_STATES[id][0]
+        state_msg.pose.position.y = INITIAL_STATES[id][1]
+        state_msg.pose.position.z = INITIAL_STATES[id][2]
+        state_msg.pose.orientation.x = INITIAL_STATES[id][3]
+        state_msg.pose.orientation.y = INITIAL_STATES[id][4]
+        state_msg.pose.orientation.z = INITIAL_STATES[id][5]
+        state_msg.pose.orientation.w = INITIAL_STATES[id][6]
+        return state_msg
 
     def cb_image(self, msg):
         self.image = msg
@@ -96,13 +106,14 @@ class SubtEnv(gym.Env):
             elif dis < 0.8:
                 done = True
         if done:
-          self.reward = -10
-        
+            self.reward = -10
+
         # self.pause_physics()
         return np.array(laser), self.reward, done, info
 
     def reset(self):
-        self.reset_model(self.state_msg)
+        self.reset_model(self.get_initial_state(
+            np.random.randint(0, len(INITIAL_STATES))))
         # self.unpause_physics()
         self.reward = 0
         rospy.loginfo('reset model')
