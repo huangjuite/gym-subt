@@ -33,8 +33,8 @@ class SubtEnv(gym.Env):
         self.laser_lower = LaserScan()
         self.image = CompressedImage()
         self.cv_bridge = CvBridge()
-        self.fig, self.axs = plt.subplots(2,1)
-
+        self.fig, self.axs = plt.subplots(2,1,subplot_kw=dict(projection='polar'))
+        
         # [Twist.linear.x, Twist.angular.z]
         self.actions = [[0.5, -0.8],
                         [1.5, -0.8],
@@ -99,7 +99,6 @@ class SubtEnv(gym.Env):
 
         # reward design
         for i, dis in enumerate(laser):
-            # dis = 10-dis
             if dis > 2.2:
                 self.reward += 1
             elif dis > 1.5 and dis < 2.2:
@@ -109,7 +108,7 @@ class SubtEnv(gym.Env):
             elif dis < 0.9:
                 done = True
         if done:
-            self.reward = -10000
+            self.reward -= 100
 
         # self.pause_physics()
         return np.array(laser), self.reward, done, info
@@ -140,12 +139,13 @@ class SubtEnv(gym.Env):
 
     def render(self, mode='laser'):
         observation = self.get_observation()
+        theta=np.arange(0,np.pi,0.157)
         self.axs[0].set_title("upper laser")
         self.axs[1].set_title("lower laser")
         self.axs[0].clear()
-        self.axs[0].plot(observation[:21])
+        self.axs[0].plot(theta,observation[:21])
         self.axs[1].clear()
-        self.axs[1].plot(observation[21:])
+        self.axs[1].plot(theta,observation[21:])
         plt.pause(0.001)
         
     def close(self):

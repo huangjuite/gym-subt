@@ -1,12 +1,3 @@
-"""
-Deep Q network,
-
-Using:
-Tensorflow: 1.0
-gym: 0.7.3
-"""
-
-
 import gym
 from RL_brain import DeepQNetwork
 
@@ -28,11 +19,10 @@ for i_episode in range(5000):
     observation = env.reset()
     ep_r = 0
     while True:
-        # env.render()
+        # env.render() # plot laser scan
         action = RL.choose_action(observation)
 
         observation_, reward, done, info = env.step(action)
-
        
         RL.store_transition(observation, action, reward, observation_)
 
