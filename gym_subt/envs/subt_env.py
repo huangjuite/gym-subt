@@ -5,6 +5,7 @@ import rospy
 import time
 import cv2
 import numpy as np
+from matplotlib import pyplot as plt
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import LaserScan, Image, CompressedImage
 from std_srvs.srv import Empty
@@ -12,7 +13,7 @@ from geometry_msgs.msg import Twist
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
 
-STEP_TIME = 0.02
+STEP_TIME = 0.01
 
 # [x,y,z,x,y,z,w]
 INITIAL_STATES = [[14.38, -0.05, -0.74, 0, 0.14, 0, 1],
@@ -24,7 +25,7 @@ INITIAL_STATES = [[14.38, -0.05, -0.74, 0, 0.14, 0, 1],
 
 
 class SubtEnv(gym.Env):
-    metadata = {'render.modes': ['human']}
+    metadata = {'render.modes': ['laser']}
 
     def __init__(self):
         rospy.init_node('gym_subt')
@@ -32,6 +33,7 @@ class SubtEnv(gym.Env):
         self.laser_lower = LaserScan()
         self.image = CompressedImage()
         self.cv_bridge = CvBridge()
+        self.fig, self.axs = plt.subplots(2,1)
 
         # [Twist.linear.x, Twist.angular.z]
         self.actions = [[0.5, -0.8],
@@ -97,17 +99,17 @@ class SubtEnv(gym.Env):
 
         # reward design
         for i, dis in enumerate(laser):
-            dis = 10-dis
+            # dis = 10-dis
             if dis > 2.2:
-                self.reward += 0.01
+                self.reward += 1
             elif dis > 1.5 and dis < 2.2:
-                self.reward -= 0.01
+                self.reward -= 1
             elif dis > 0.9 and dis < 1.5:
-                self.reward -= 0.03
+                self.reward -= 3
             elif dis < 0.9:
                 done = True
         if done:
-            self.reward = -10
+            self.reward = -10000
 
         # self.pause_physics()
         return np.array(laser), self.reward, done, info
@@ -128,17 +130,24 @@ class SubtEnv(gym.Env):
         laser = []
         for i, dis in enumerate(laser_u):
             if dis == np.inf:
-                dis = 10
-            laser.append(10-dis)
+                dis = 100
+            laser.append(dis)
         for i, dis in enumerate(laser_l):
             if dis == np.inf:
-                dis = 10
-            laser.append(10-dis)
+                dis = 100
+            laser.append(dis)
         return laser
 
-    def render(self, mode='human'):
-        pass
-
+    def render(self, mode='laser'):
+        observation = self.get_observation()
+        self.axs[0].set_title("upper laser")
+        self.axs[1].set_title("lower laser")
+        self.axs[0].clear()
+        self.axs[0].plot(observation[:21])
+        self.axs[1].clear()
+        self.axs[1].plot(observation[21:])
+        plt.pause(0.001)
+        
     def close(self):
         self.unpause_physics()
         rospy.signal_shutdown('WTF')

@@ -28,7 +28,7 @@ for i_episode in range(5000):
     observation = env.reset()
     ep_r = 0
     while True:
-
+        # env.render()
         action = RL.choose_action(observation)
 
         observation_, reward, done, info = env.step(action)
