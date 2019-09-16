@@ -44,3 +44,7 @@ rviz
 ```
 $ rviz -d gym-subt-v0.rviz
 ```
+
+
+# reference
+https://github.com/MorvanZhou/Reinforcement-learning-with-tensorflow
